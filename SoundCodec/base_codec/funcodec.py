@@ -35,21 +35,18 @@ class BaseCodec:
     def synth(self, data, local_save=True):
         extracted_unit = self.extract_unit(data)
         data['unit'] = extracted_unit.unit
-        extract_data = extracted_unit.stuff_for_synth
-        audio_array = extract_data["recon_speech"][0].cpu()
+        audio_array = self.decode_unit(extracted_unit.stuff_for_synth)
         if local_save:
             audio_path = f"dummy-funcodec-{self.setting}/{data['id']}.wav"
             save_audio(audio_array, audio_path, self.sampling_rate)
             data['audio'] = audio_path
         else:
-            data['audio']['array'] = audio_array.numpy()
+            data['audio']['array'] = audio_array
         return data
 
     @torch.no_grad()
     def extract_unit(self, data):
         audio_signal = AudioSignal(data["audio"]['array'], data["audio"]['sampling_rate'])
-        if audio_signal.sample_rate != self.sampling_rate:
-            audio_signal.resample(self.sampling_rate)
         code_indices, code_embeddings, recon_speech, sub_quants = self.model(
             audio_signal.audio_data[0].to(self.device))
         return ExtractedUnit(
@@ -57,3 +54,9 @@ class BaseCodec:
             stuff_for_synth={"code_indices": code_indices, "code_embeddings": code_embeddings,
                              "recon_speech": recon_speech}
         )
+
+    @torch.no_grad()
+    def decode_unit(self, stuff_for_synth):
+        extract_data = stuff_for_synth
+        audio_array = extract_data["recon_speech"][0].cpu().numpy()
+        return audio_array

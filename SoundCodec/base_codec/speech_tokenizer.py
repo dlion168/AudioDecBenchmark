@@ -35,29 +35,31 @@ class BaseCodec:
     def synth(self, data, local_save=True):
         extracted_unit = self.extract_unit(data)
         data['unit'] = extracted_unit.unit
-        codes = extracted_unit.stuff_for_synth
-        RVQ_1 = codes[:1, :, :]  # Contain content info, can be considered as semantic tokens
-        RVQ_supplement = codes[1:, :, :]  # Contain timbre info, complete info lost by the first quantizer
-        # Concatenating semantic tokens (RVQ_1) and supplementary timbre tokens and then decoding
-        wav = self.model.decode(torch.cat([RVQ_1, RVQ_supplement], axis=0).to(self.device))
-        wav = wav.detach().cpu().squeeze(0)
+        audio_values = self.decode_unit(extracted_unit.stuff_for_synth)
         if local_save:
             audio_path = f"dummy-SpeechTokenizer/{data['id']}.wav"
-            save_audio(wav, audio_path, self.sampling_rate)
+            save_audio(audio_values, audio_path, self.sampling_rate)
             data['audio'] = audio_path
         else:
-            data['audio']['array'] = wav.numpy()
+            data['audio']['array'] = audio_values
         return data
 
     @torch.no_grad()
     def extract_unit(self, data):
         wav = torch.tensor(numpy.array([data["audio"]['array']]), dtype=torch.float32).to(self.device)
-        sampling_rate = data["audio"]['sampling_rate']
-        if sampling_rate != self.sampling_rate:
-            wav = torchaudio.functional.resample(wav, sampling_rate, self.sampling_rate)
         wav = wav.unsqueeze(0)
         codes = self.model.encode(wav.to(self.device))
         return ExtractedUnit(
             unit=codes.permute(1, 0, 2).squeeze(0),
             stuff_for_synth=codes
         )
+
+    @torch.no_grad()
+    def decode_unit(self, stuff_for_synth):
+        codes = stuff_for_synth
+        RVQ_1 = codes[:1, :, :]  # Contain content info, can be considered as semantic tokens
+        RVQ_supplement = codes[1:, :, :]  # Contain timbre info, complete info lost by the first quantizer
+        # Concatenating semantic tokens (RVQ_1) and supplementary timbre tokens and then decoding
+        wav = self.model.decode(torch.cat([RVQ_1, RVQ_supplement], axis=0).to(self.device))
+        wav = wav.detach().cpu().squeeze(0).numpy()
+        return wav
