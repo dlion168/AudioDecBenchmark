@@ -10,5 +10,13 @@
 !/SoundCodec/test/sample8_16k.wav
 !/SoundCodec/test/sample9_48k.wav
 !/SoundCodec/test/sample10_16k.wav
-
+audiodec_autoencoder_24k_320d
+audiodec_vocoder_24k_320d
+languagecodec/*
+language_codec
+downloaded_data
+Amphion
+cached_datasets
+datasets
+facodec
 __pycache__/

@@ -10,3 +10,5 @@ descript-audiotools
 psutil
 praat-parselmouth
 torchmetrics
+nlp2
+gdown

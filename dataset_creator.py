@@ -3,7 +3,7 @@ from datasets import DatasetDict, Audio, load_from_disk
 from SoundCodec.codec import load_codec, list_codec
 from SoundCodec.dataset import load_dataset
 from SoundCodec.dataset.general import extract_unit, apply_audio_cast
-
+import copy
 
 def run_experiment(dataset_name):
     cleaned_dataset = load_dataset(dataset_name)
@@ -29,12 +29,13 @@ def run_experiment(dataset_name):
         except:
             pass
         codec = load_codec(codec_name)
-        synthesized_dataset = apply_audio_cast(cleaned_dataset, codec.sampling_rate)
-        if args.extract_unit_only == 'extract_unit':
+        # synthesized_dataset = apply_audio_cast(cleaned_dataset, codec.sampling_rate)
+        synthesized_dataset = copy.deepcopy(cleaned_dataset)
+        if args.extract_unit_only:
             synthesized_dataset = synthesized_dataset.map(extract_unit, fn_kwargs={'extract_unit_class': codec})
         else:
-            synthesized_dataset = synthesized_dataset.map(codec.synth, num_proc=3, batch_size=600)
-            # synthesized_dataset = synthesized_dataset.map(codec.synth)
+            # synthesized_dataset = synthesized_dataset.map(codec.synth, num_proc=3, batch_size=10)
+            synthesized_dataset = synthesized_dataset.map(codec.synth, fn_kwargs={"local_save": False})
             synthesized_dataset = synthesized_dataset.cast_column("audio", Audio(sampling_rate=sampling_rate))
         synthesized_dataset.save_to_disk(f"./cached_datasets/{dataset_name}_{codec_name}/")
         datasets_dict[f'{codec_name}'] = synthesized_dataset
