@@ -34,7 +34,7 @@ class BaseCodec:
             save_audio(decompressed_audio, audio_path, self.sampling_rate)
             data['audio'] = audio_path
         else:
-            data['audio']['array'] = decompressed_audio.cpu().numpy()
+            data['audio']['array'] = decompressed_audio.cpu().numpy()[0]
         return data
 
     @torch.no_grad()

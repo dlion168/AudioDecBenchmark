@@ -12,7 +12,7 @@ class BaseCodec:
         try:
             from Amphion.models.codec.ns3_codec import FACodecEncoder, FACodecDecoder
         except:
-            raise Exception("Please install Amphion first. https://github.com/open-mmlab/Amphion/tree/main")
+            raise Exception("Please install Amphion first. git clone https://github.com/open-mmlab/Amphion.git && cd Amphion && bash env.sh")
 
         self.config()
         self.encoder = FACodecEncoder(

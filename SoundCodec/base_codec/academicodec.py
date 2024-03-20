@@ -52,7 +52,7 @@ class BaseCodec:
             save_audio(audio_array, audio_path, self.sampling_rate)
             data['audio'] = audio_path
         else:
-            data['audio']['array'] = audio_array
+            data['audio']['array'] = audio_array[0]
         return data
 
     @torch.no_grad()
